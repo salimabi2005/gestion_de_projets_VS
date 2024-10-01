@@ -1,0 +1,29 @@
+# Step 1: Build the Vue.js frontend
+FROM node:16 AS build-frontend
+WORKDIR /app
+COPY frontend/package*.json ./frontend/
+WORKDIR /app/frontend
+RUN npm install --legacy-peer-deps
+COPY ./frontend .
+RUN npm run build
+
+# Step 2: Backend setup
+FROM node:16
+WORKDIR /app
+
+# Copy backend files
+COPY backend/package*.json ./backend/
+WORKDIR /app/backend
+RUN npm install
+
+# Copy Vue.js frontend build files to backend's public directory
+COPY --from=build-frontend /app/frontend/dist /app/backend/public
+
+# Copy backend source files
+COPY ./backend .
+
+# Expose the backend port
+EXPOSE 3000
+
+# Start the backend server
+CMD ["node", "index.js"]
